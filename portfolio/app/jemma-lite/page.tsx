@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import Logo from "@/components/Logo";
+import Logo from "../components/Logo";
 
 export default function JemmaLite() {
   const [msg, setMsg] = useState('What can you do?');
