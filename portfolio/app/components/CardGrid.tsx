@@ -19,7 +19,7 @@ export default function CardGrid() {
     (name: 'projects' | 'about' | 'contact') => {
       const next = new URLSearchParams(params.toString());
       next.set('panel', name);
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+      router.replace(`/?${next.toString()}`, { scroll: false });
     },
     [params, pathname, router]
   );
@@ -27,6 +27,7 @@ export default function CardGrid() {
   const close = useCallback(() => {
     const next = new URLSearchParams(params.toString());
     next.delete('panel');
+    const qs = next.toString();
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [params, pathname, router]);
 
