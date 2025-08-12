@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import CardGrid from './components/CardGrid';
-
+import { Suspense } from 'react';
 export default function Home() {
   return (
     <section className="space-y-12">
@@ -29,7 +29,9 @@ export default function Home() {
       </div>
 
       {/* Expanding cards */}
+    <Suspense fallback={null}>
       <CardGrid />
+    </Suspense>
     </section>
   );
 }
