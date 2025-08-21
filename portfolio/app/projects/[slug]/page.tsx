@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { projects } from "@/app/data/projects";
+import { projectContent } from  ".../content";
 
 // In this project, Next types `params` as a Promise
 type ParamsPromise = Promise<{ slug: string }>;

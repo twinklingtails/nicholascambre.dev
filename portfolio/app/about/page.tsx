@@ -5,7 +5,7 @@ export default function AboutPage() {
       {/* Two-panel layout */}
       <div className="grid gap-8 md:grid-cols-2">
         {/* My Story */}
-        <div className="rounded-2xl bg-white/80 dark:bg-neutral-900/80 p-8 shadow-lg backdrop-blur-md">
+        <div className="rounded-xl px-4 py-2 border border-pink-400 text-pink-200 hover:bg-pink-400/10 transition">
           <h2 className="text-3xl font-bold">My Story</h2>
           <div className="prose dark:prose-invert max-w-none mt-4">
             <p>

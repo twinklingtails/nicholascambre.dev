@@ -28,38 +28,38 @@ export default function Home() {
   return (
     <section className="space-y-12">
       {/* Hero */}
-      <div className="rounded-2xl relative overflow-hidden p-8 shadow-lg">
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 via-neutral-100 to-transparent dark:from-neutral-800 dark:via-neutral-900" />
-        <div className="relative">
+      <div className="relative rounded-2xl shadow-lg bg-transparent text-white">
+        <div className="relative p-8 md:p-12">
           <h1 className="text-4xl font-bold">Nicholas Cambre</h1>
-          <p className="mt-1 text-lg text-neutral-700 dark:text-neutral-300">
+          <p className="mt-1 text-lg/7 opacity-90">
             Systems & Automation Engineer • Seattle, WA
           </p>
 
-          <p className="mt-4 max-w-3xl text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            Trends change fast, but durable systems never go out of style. My work is about
-            stripping away excess and building practical foundations that stand the test of time.
-            Whether it is an AI assistant, a smart home automation flow, or a streamlined server,
-            my goal is the same: to make technology that feels effortless to use, resilient under
-            pressure, and meaningful in the real world.
+          <p className="mt-4 max-w-3xl leading-relaxed opacity-90">
+            Trends change fast, but durable systems never go out of style. My
+            work is about stripping away excess and building practical
+            foundations that stand the test of time. Whether it is an AI
+            assistant, a smart home automation flow, or a streamlined server, my
+            goal is the same: to make technology that feels effortless to use,
+            resilient under pressure, and meaningful in the real world.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/projects"
-              className="rounded-xl px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:shadow-md transition"
+              className="rounded-xl px-4 py-2 bg-teal-400 text-black font-medium hover:bg-teal-300 transition shadow-sm"
             >
               View My Work
             </Link>
             <Link
               href="/contact"
-              className="rounded-xl px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:shadow-md transition"
+              className="rounded-xl px-4 py-2 border border-white/60 text-white hover:bg-white/10 transition"
             >
               Get In Touch
             </Link>
             <Link
               href="/resume"
-              className="rounded-xl px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:shadow-md transition"
+              className="rounded-xl px-4 py-2 border border-pink-400 text-pink-200 hover:bg-pink-400/10 transition"
             >
               Resume
             </Link>
@@ -69,23 +69,27 @@ export default function Home() {
 
       {/* Featured Projects */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Featured Projects</h2>
+        <h2 className="text-2xl font-semibold text-white">Featured Projects</h2>
 
-        <ul className="grid gap-6 md:grid-cols-2">
+        <ul className="grid gap-6 md:grid-rows-2">
           {featured.map((p) => (
             <li key={p.slug}>
               <Link
                 href={`/projects/${p.slug}`}
-                className="block rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6 hover:shadow-lg transition bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md"
+                className="block rounded-2xl p-6 hover:shadow-lg transition bg-transparent text-white border border-white/40"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-semibold">{p.title}</h3>
+                    <h3 className="text-xl font-semibold text-white">
+                      {p.title}
+                    </h3>
                     {p.tagline && (
-                      <p className="mt-1 text-sm opacity-80">{p.tagline}</p>
+                      <p className="mt-1 text-sm text-white/70">
+                        {p.tagline}
+                      </p>
                     )}
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full border border-neutral-300 dark:border-neutral-700">
+                  <span className="text-xs px-2 py-1 rounded-full border border-white/40 text-white/70">
                     Case Study
                   </span>
                 </div>
@@ -99,7 +103,7 @@ export default function Home() {
                 )}
 
                 {p.description && (
-                  <p className="mt-4 text-sm text-neutral-700 dark:text-neutral-300 line-clamp-3">
+                  <p className="mt-4 text-sm text-white/80 line-clamp-3">
                     {p.description}
                   </p>
                 )}
@@ -109,7 +113,7 @@ export default function Home() {
                     {p.tags.map((t) => (
                       <span
                         key={t}
-                        className="text-xs px-2 py-1 rounded-full border border-neutral-300 dark:border-neutral-700"
+                        className="text-xs px-2 py-1 rounded-full border border-white/40 text-white/80"
                       >
                         {t}
                       </span>
@@ -117,7 +121,7 @@ export default function Home() {
                   </div>
                 )}
 
-                <span className="mt-5 inline-block underline underline-offset-4 decoration-transparent hover:decoration-teal-400 transition">
+                <span className="mt-5 inline-block underline underline-offset-4 decoration-transparent hover:decoration-pink-400 hover:text-teal-300 transition">
                   Read more →
                 </span>
               </Link>
@@ -128,7 +132,7 @@ export default function Home() {
 
       {/* Highlighted Skills — ticker */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Highlighted Skills</h2>
+        <h2 className="text-2xl font-semibold text-white">Highlighted Skills</h2>
         <SkillsTicker skills={highlightedSkills} speedMs={24000} />
       </div>
     </section>
