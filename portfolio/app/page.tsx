@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { projects } from "@/app/data/projects";
-import SkillsTicker from "@/app/components/SkillsTicker"; 
+import SkillsTicker from "@/app/components/SkillsTicker";
 
 const featuredSlugs = ["jemma-ai", "home-automation"];
 
@@ -39,7 +39,7 @@ export default function Home() {
           <p className="mt-4 max-w-3xl text-neutral-700 dark:text-neutral-300 leading-relaxed">
             Trends change fast, but durable systems never go out of style. My work is about
             stripping away excess and building practical foundations that stand the test of time.
-            Whether it's an AI assistant, a smart home automation flow, or a streamlined server,
+            Whether it is an AI assistant, a smart home automation flow, or a streamlined server,
             my goal is the same: to make technology that feels effortless to use, resilient under
             pressure, and meaningful in the real world.
           </p>
@@ -58,12 +58,12 @@ export default function Home() {
               Get In Touch
             </Link>
             <Link
-	            href="/resume"
+              href="/resume"
               className="rounded-xl px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:shadow-md transition"
             >
               Resume
             </Link>
-	 </div>
+          </div>
         </div>
       </div>
 
@@ -91,7 +91,11 @@ export default function Home() {
                 </div>
 
                 {p.heroImage && (
-                  <img src={p.heroImage} alt={p.title} className="mt-4 w-full rounded-xl" />
+                  <img
+                    src={p.heroImage}
+                    alt={p.title}
+                    className="mt-4 w-full rounded-xl"
+                  />
                 )}
 
                 {p.description && (

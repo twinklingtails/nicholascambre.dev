@@ -1,15 +1,20 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { projects } from "@/app/data/projects";
 
-type Params = { slug: string };
+// In this project, Next types `params` as a Promise
+type ParamsPromise = Promise<{ slug: string }>;
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
-  const p = projects.find((x) => x.slug === params.slug);
+export async function generateMetadata(
+  { params }: { params: ParamsPromise }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const p = projects.find((x) => x.slug === slug);
   if (!p) return {};
   return {
     title: `${p.title} • Projects`,
@@ -22,9 +27,12 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default function ProjectPage({ params }: { params: Params }) {
-  const p = projects.find((x) => x.slug === params.slug);
-  if (!p) return notFound();
+export default async function ProjectPage(
+  { params }: { params: ParamsPromise }
+) {
+  const { slug } = await params;
+  const p = projects.find((x) => x.slug === slug);
+  if (!p) notFound();
 
   return (
     <article className="space-y-6">
@@ -39,10 +47,11 @@ export default function ProjectPage({ params }: { params: Params }) {
         <img src={p.heroImage} alt={p.title} className="w-full rounded-xl" />
       )}
 
-      <section className="prose dark:prose-invert max-w-none">
-        <p>{p.description}</p>
-        {/* Add richer sections/screenshots here */}
-      </section>
+      {p.description && (
+        <section className="prose dark:prose-invert max-w-none">
+          <p>{p.description}</p>
+        </section>
+      )}
     </article>
   );
 }

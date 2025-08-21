@@ -120,7 +120,7 @@ export default function AboutPage() {
       <div className="rounded-2xl bg-white/80 dark:bg-neutral-900/80 p-8 shadow-lg backdrop-blur-md">
         <h3 className="text-2xl font-semibold">Outside of Work</h3>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3 text-neutral-700 dark:text-neutral-300">
-          <li>🦊 Fox-themed branding & design</li>
+          <li> 🎨 Website Creation & design</li>
           <li>🎮 Gaming + streaming</li>
           <li>🏙️ Exploring Seattle with Luna</li>
         </ul>
