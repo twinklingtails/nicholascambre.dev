@@ -5,9 +5,9 @@ export default function AboutPage() {
       {/* Two-panel layout */}
       <div className="grid gap-8 md:grid-cols-2">
         {/* My Story */}
-        <div className="rounded-xl px-4 py-2 border border-pink-400 text-pink-200 hover:bg-pink-400/10 transition">
+        <div className="block rounded-2xl p-6 hover:shadow-lg transition bg-transparent text-white border border-white/40">
           <h2 className="text-3xl font-bold">My Story</h2>
-          <div className="prose dark:prose-invert max-w-none mt-4">
+          <div className="prose prose-invert max-w-none mt-4">
             <p>
               I believe technology should empower, not overwhelm. My path started
               with a habit of taking complex systems apart and rebuilding them
@@ -27,13 +27,13 @@ export default function AboutPage() {
         </div>
 
         {/* Let’s Connect */}
-        <div className="rounded-2xl bg-white/80 dark:bg-neutral-900/80 p-8 shadow-lg backdrop-blur-md">
+        <div className="block rounded-2xl p-6 hover:shadow-lg transition bg-transparent text-white border border-white/40">
           <h2 className="text-3xl font-bold">Let’s Connect</h2>
           <ul className="mt-6 space-y-4">
             <li>
               <a
                 href="mailto:nicholascambre0077@icloud.com"
-                className="group flex items-center gap-3 hover:text-teal-500 transition"
+                className="group flex items-center gap-3 hover:text-teal-300 transition"
               >
                 {/* Mail icon */}
                 <svg
@@ -58,7 +58,7 @@ export default function AboutPage() {
                 href="https://www.linkedin.com/in/nicholascambre"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 hover:text-teal-500 transition"
+                className="group flex items-center gap-3 hover:text-teal-300 transition"
               >
                 {/* LinkedIn icon */}
                 <svg
@@ -80,7 +80,7 @@ export default function AboutPage() {
                 href="https://github.com/twinklingtails"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-3 hover:text-teal-500 transition"
+                className="group flex items-center gap-3 hover:text-teal-300 transition"
               >
                 {/* GitHub icon */}
                 <svg
@@ -99,8 +99,8 @@ export default function AboutPage() {
           </ul>
 
           {/* Optional: recruiter-friendly CTA */}
-          <div className="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-            <p className="text-sm text-neutral-700 dark:text-neutral-300">
+          <div className="mt-8 rounded-xl border border-white/30 p-4">
+            <p className="text-sm text-white/80">
               Open to roles in systems, automation, and AI tooling. Let’s talk
               about building simple, durable software together.
             </p>
@@ -109,18 +109,18 @@ export default function AboutPage() {
       </div>
 
       {/* Mission Statement */}
-      <blockquote className="rounded-2xl border border-teal-300/40 bg-teal-500/5 p-6 text-lg italic">
+      <blockquote className="block rounded-2xl p-6 bg-transparent text-white border border-white/40 italic">
         “Practical solutions for everyday challenges. I challenge the idea that
         programming requires advanced education by creating accessible,
         functional tools designed to solve real-world problems with clarity and
         efficiency.”
       </blockquote>
 
-      {/* Personal touch (optional) */}
-      <div className="rounded-2xl bg-white/80 dark:bg-neutral-900/80 p-8 shadow-lg backdrop-blur-md">
+      {/* Personal touch */}
+      <div className="block rounded-2xl p-6 hover:shadow-lg transition bg-transparent text-white border border-white/40">
         <h3 className="text-2xl font-semibold">Outside of Work</h3>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-3 text-neutral-700 dark:text-neutral-300">
-          <li> 🎨 Website Creation & design</li>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-3 text-white/80">
+          <li>🎨 Website creation & design</li>
           <li>🎮 Gaming + streaming</li>
           <li>🏙️ Exploring Seattle with Luna</li>
         </ul>

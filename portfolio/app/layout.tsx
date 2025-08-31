@@ -50,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/projects">Projects</Link>
               <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/about">About</Link>
               <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/contact">Contact</Link>
+	      <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/jemma-lite">Jemma</Link>
               <ThemeToggle />
             </div>
           </nav>
