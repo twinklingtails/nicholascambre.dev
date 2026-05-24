@@ -2,9 +2,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { GradientLogo } from "@/app/components/GradientLogo";
+import { theme } from "@/app/lib/theme";
 
 interface LoginFormProps {
-  /** Pass `auth.login` from the page. Throws on failure with a message. */
   onSubmit: (username: string, password: string) => Promise<void>;
 }
 
@@ -22,8 +23,6 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     setError(null);
     try {
       await onSubmit(username, password);
-      // On success the parent renders ChatView instead of LoginForm —
-      // this component unmounts, no need to reset local state.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
       setSubmitting(false);
@@ -34,24 +33,30 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     <div className="grid min-h-[60vh] place-items-center px-4 text-neutral-100">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-5 rounded-2xl border border-neutral-800 bg-neutral-950/60 p-6 backdrop-blur"
+        className={`w-full max-w-sm space-y-5 rounded-2xl border bg-[#0d1117]/60 p-6 backdrop-blur ${theme.border}`}
       >
-        <header className="space-y-1">
+        <header className="space-y-2">
           <div className="flex items-center gap-3">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.7)]" />
-            <h1 className="text-xl font-semibold tracking-tight">
-              Sign in to Jemma
-            </h1>
+            <GradientLogo letter="J" size="md" />
+            <div>
+              <h1 className={`text-lg font-semibold ${theme.text}`}>
+                Sign in to Jemma
+              </h1>
+              <p
+                className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+              >
+                local-first · credentials stay on your server
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-neutral-400">
-            Local-first assistant — credentials are checked against your server.
-          </p>
         </header>
 
         <div className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-neutral-400">
-              Username
+            <span
+              className={`mb-1 block text-xs ${theme.mono} ${theme.muted}`}
+            >
+              username
             </span>
             <input
               type="text"
@@ -61,13 +66,15 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
               autoFocus
               required
               disabled={submitting}
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/30 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-[#050505]/60 px-3 py-2 text-sm focus:border-[#00b8c8]/60 focus:outline-none focus:ring-1 focus:ring-[#00b8c8]/30 disabled:opacity-60 ${theme.border} ${theme.text}`}
             />
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-neutral-400">
-              Password
+            <span
+              className={`mb-1 block text-xs ${theme.mono} ${theme.muted}`}
+            >
+              password
             </span>
             <input
               type="password"
@@ -76,7 +83,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
               autoComplete="current-password"
               required
               disabled={submitting}
-              className="w-full rounded-xl border border-neutral-800 bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/30 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-[#050505]/60 px-3 py-2 text-sm focus:border-[#00b8c8]/60 focus:outline-none focus:ring-1 focus:ring-[#00b8c8]/30 disabled:opacity-60 ${theme.border} ${theme.text}`}
             />
           </label>
         </div>
@@ -84,7 +91,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         {error && (
           <div
             role="alert"
-            className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-300"
+            className="rounded-lg border border-[#ff4fa3]/40 bg-[#ff4fa3]/10 px-3 py-2 text-sm text-[#ff4fa3]"
           >
             {error}
           </div>
@@ -93,9 +100,9 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
         <button
           type="submit"
           disabled={submitting || !username || !password}
-          className="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-medium text-neutral-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`w-full rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${theme.sendButton} disabled:cursor-not-allowed`}
         >
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? "signing in…" : "sign in"}
         </button>
       </form>
     </div>

@@ -17,3 +17,101 @@ html { @apply bg-white text-black; }
 }
 /* debug */
 body { outline: 4px solid lime; }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Jemma "neural console" design tokens
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces — dark to light */
+  --console-bg: #050505;
+  --console-panel: #090b0f;
+  --console-card: #0d1117;
+  --console-border: #202936;
+
+  /* Text */
+  --console-text: #f7fafc;
+  --console-text-soft: #d6e4f0;
+  --console-muted: #7a8699;
+
+  /* Brand */
+  --jemma-teal: #00b8c8;
+  --jemma-blue: #1677ff;
+  --jemma-pink: #ff4fa3;
+  --jemma-pink-dark: #d93f89;
+}
+
+html,
+body {
+  background: var(--console-bg);
+  color: var(--console-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Teal text selection — small touch, screams "this is a designed surface" */
+::selection {
+  background: rgba(0, 184, 200, 0.35);
+  color: #ffffff;
+}
+
+/* Terminal-feel scrollbar (WebKit) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--console-border);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--jemma-teal);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--console-border) transparent;
+}
+
+/* Background grid utility — used on hero / chat surfaces. Two stacked
+   layers: dot grid + horizontal scanline ticks. Subtle on purpose. */
+.console-grid {
+  background-image:
+    linear-gradient(rgba(0, 184, 200, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 79, 163, 0.045) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.console-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 184, 200, 0.02) 0px,
+    rgba(0, 184, 200, 0.02) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Gradient edge lines — top/right accents like the ones in your App.tsx */
+.console-edge-top {
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--jemma-teal),
+    transparent
+  );
+}
+
+.console-edge-right {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--jemma-pink),
+    transparent
+  );
+}

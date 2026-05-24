@@ -1,73 +1,103 @@
-import "./globals.css";
-import Link from "next/link";
-import ThemeToggle from "./components/ThemeToggle";
+// app/layout.tsx
 
-export const metadata = {
-  title: "Nicholas Cambre — Portfolio",
-  description: "I build intelligent agents, automation, and clean tooling.",
+import "./globals.css";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { GridBackground } from "./components/GridBackground";
+import { GradientLogo } from "./components/GradientLogo";
+import { StatusPill } from "./components/StatusPill";
+import { theme } from "./lib/theme";
+
+export const metadata: Metadata = {
+  title: "Nicholas Cambre — neural console",
+  description:
+    "Felix builds local-first AI agents, automation, and tooling that runs on his own hardware.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="relative min-h-screen text-neutral-900 dark:text-neutral-100">
-        {/* set theme early */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-(function(){
-  try {
-    var stored = localStorage.getItem('theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var wantDark = stored ? stored === 'dark' : prefersDark;
-    document.documentElement.classList.toggle('dark', wantDark);
-  } catch(e){}
-})();
-            `,
-          }}
-        />
+    <html lang="en">
+      <body
+        className={`relative min-h-screen overflow-x-hidden ${theme.appShell}`}
+      >
+        {/* Fixed background layer — grid + scanlines + accent edges */}
+        <GridBackground />
 
-        {/* Global background image + overlay */}
-        <div
-          className="pointer-events-none fixed inset-0 -z-10"
-          style={{
-            backgroundImage: "url('/nicholascambredevwebsite.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundAttachment: "fixed", // subtle parallax
-          }}
-          aria-hidden="true"
-        />
-        <div className="pointer-events-none fixed inset-0 -z-10 bg-black/55" aria-hidden="true" />
-
-        {/* Header / nav */}
-        <header className="border-b border-neutral-200/70 dark:border-neutral-800/70 backdrop-blur-sm bg-white/30 dark:bg-neutral-950/20">
-          <nav className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <header
+          className={`relative z-10 border-b ${theme.border} bg-[#090b0f]/80 backdrop-blur-sm`}
+        >
+          <nav className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-3">
-              <span className="font-semibold tracking-tight">NC</span>
+              <GradientLogo letter="NC" size="sm" />
+              <div className="flex flex-col leading-tight">
+                <span className={`text-sm font-semibold ${theme.text}`}>
+                  Nicholas Cambre
+                </span>
+                <span
+                  className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+                >
+                  neural console
+                </span>
+              </div>
             </Link>
-            <div className="flex items-center gap-3 text-sm">
-              <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/projects">Projects</Link>
-              <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/about">About</Link>
-              <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/contact">Contact</Link>
-	      <Link className="rounded-xl px-4 py-2 border border-neutral-300/70 dark:border-neutral-700/70 hover:bg-white/20 hover:dark:bg-white/10 transition" href="/jemma-lite">Jemma</Link>
-              <ThemeToggle />
+
+            <div className="flex items-center gap-2">
+              <NavLink href="/projects">Projects</NavLink>
+              <NavLink href="/about">About</NavLink>
+              <NavLink href="/contact">Contact</NavLink>
+              <NavLink href="/jemma-lite" accent>
+                Jemma
+              </NavLink>
             </div>
           </nav>
         </header>
 
-        {/* Main content (your pages can still use frosted cards) */}
-        <main className="relative mx-auto max-w-4xl px-6 py-12">
+        {/* ── Main ─────────────────────────────────────────────────── */}
+        <main className="relative z-10 mx-auto max-w-5xl px-6 py-12">
           {children}
         </main>
 
-        {/* Footer */}
-        <footer className="mt-20 border-t border-neutral-200/70 dark:border-neutral-800/70 backdrop-blur-sm bg-white/20 dark:bg-neutral-950/10">
-          <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-neutral-700 dark:text-neutral-300">
-            © {new Date().getFullYear()} Nicholas Cambre • nicholascambre.dev
+        {/* ── Footer ───────────────────────────────────────────────── */}
+        <footer className={`relative z-10 mt-20 border-t ${theme.border}`}>
+          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-3 px-6 py-6 sm:flex-row sm:items-center">
+            <span className={`text-xs ${theme.muted} ${theme.mono}`}>
+              © {new Date().getFullYear()} nicholascambre.dev
+            </span>
+            <StatusPill label="systems nominal" />
           </div>
         </footer>
       </body>
     </html>
+  );
+}
+
+// ── NavLink ─────────────────────────────────────────────────────────────
+// Two variants:
+//   - default: slate border, hover teal
+//   - accent (used on /jemma-lite): teal border at rest, brighter on hover
+// Lets the "Jemma" nav item subtly stand out without screaming.
+
+interface NavLinkProps {
+  href: string;
+  children: React.ReactNode;
+  accent?: boolean;
+}
+
+function NavLink({ href, children, accent = false }: NavLinkProps) {
+  const base = "rounded-lg border px-3 py-1.5 text-xs transition-colors";
+
+  const variant = accent
+    ? "border-[#00b8c8]/40 text-[#00b8c8] hover:border-[#00b8c8] hover:bg-[#00b8c8]/10"
+    : `${theme.border} ${theme.textSoft} hover:border-[#00b8c8] hover:bg-[#101722]`;
+
+  return (
+    <Link href={href} className={`${base} ${theme.mono} ${variant}`}>
+      {children}
+    </Link>
   );
 }
