@@ -50,11 +50,14 @@ async function proxy(
       body,
       signal: ctrl.signal,
     });
-  } catch (e) {
+} catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return new Response(
-      JSON.stringify({ error: `bad gateway: ${msg}` }),
-      { status: 502, headers: { "content-type": "application/json" } },
+      JSON.stringify({ error: "jemma_offline", detail: msg }),
+      {
+        status: 503,
+        headers: { "content-type": "application/json" },
+      },
     );
   }
 

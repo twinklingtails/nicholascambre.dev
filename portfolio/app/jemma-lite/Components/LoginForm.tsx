@@ -6,7 +6,10 @@ import { GradientLogo } from "@/app/components/GradientLogo";
 import { theme } from "@/app/lib/theme";
 
 interface LoginFormProps {
+  /** Pass `auth.login` from the page. Throws on failure with a message. */
   onSubmit: (username: string, password: string) => Promise<void>;
+  /** If provided, renders a "back to demo" link at the bottom. */
+  onCancel?: () => void;
 }
 
 export function LoginForm({ onSubmit }: LoginFormProps) {

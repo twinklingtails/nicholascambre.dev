@@ -8,12 +8,16 @@ export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
+
   if (!p) return {};
+
   return {
     title: `${p.title} • Projects`,
     description: p.tagline ?? p.description?.slice(0, 160),
@@ -25,38 +29,47 @@ export async function generateMetadata(
   };
 }
 
-export default async function ProjectPage(
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const p = projects.find((x) => x.slug === slug);
+
   if (!p) notFound();
 
   return (
     <article className="space-y-8">
       {/* Header */}
-      <div className="block rounded-2xl p-6 bg-transparent border border-white/40 text-white">
+      <div className="block rounded-2xl border border-white/40 bg-transparent p-6 text-white">
         <h1 className="text-3xl font-bold">{p.title}</h1>
-        {p.tagline && (
-          <p className="mt-2 text-white/70">{p.tagline}</p>
-        )}
+
+        {p.tagline && <p className="mt-2 text-white/70">{p.tagline}</p>}
       </div>
 
       {/* Hero Image */}
       {p.heroImage && (
-        <div className="block rounded-2xl overflow-hidden border border-white/40">
-          <img
-            src={p.heroImage}
-            alt={p.title}
-            className="w-full rounded-xl"
-          />
+        <div className="block overflow-hidden rounded-2xl border border-white/40">
+          <img src={p.heroImage} alt={p.title} className="w-full rounded-xl" />
         </div>
       )}
 
       {/* Description */}
       {p.description && (
-        <div className="block rounded-2xl p-6 bg-transparent border border-white/40 text-white/80">
+        <div className="block rounded-2xl border border-white/40 bg-transparent p-6 text-white/80">
           <p>{p.description}</p>
+        </div>
+      )}
+
+      {/* Deep Dive */}
+      {p.jemmaContext && (
+        <div className="block rounded-2xl border border-white/40 bg-transparent p-6 text-white/80">
+          <h2 className="mb-4 text-xl font-semibold text-white">Deep Dive</h2>
+
+          <div className="whitespace-pre-line leading-relaxed">
+            {p.jemmaContext}
+          </div>
         </div>
       )}
     </article>
