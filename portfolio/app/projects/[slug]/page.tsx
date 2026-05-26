@@ -20,7 +20,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { slug } = params;
+ const { slug } = await params;
   const project = await getProject(slug);
   if (!project) return {};
   return {
@@ -35,7 +35,7 @@ export async function generateMetadata({
 }
 
 export default async function ProjectDetailPage({ params }: PageProps) {
-  const { slug } = params;
+const { slug } = await params;
   const project = await getProject(slug);
   if (!project) notFound();
 
