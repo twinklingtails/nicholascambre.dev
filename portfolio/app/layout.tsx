@@ -11,7 +11,7 @@ import { theme } from "./lib/theme";
 export const metadata: Metadata = {
   title: "Nicholas Cambre — neural console",
   description:
-    "Felix builds local-first AI agents, automation, and tooling that runs on his own hardware.",
+    "Nicholas builds local-first AI agents, automation, and tooling that runs on his own hardware.",
 };
 
 export default function RootLayout({
