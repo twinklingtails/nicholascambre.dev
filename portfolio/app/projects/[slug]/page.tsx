@@ -9,7 +9,7 @@ import { StatusPill } from "@/app/components/StatusPill";
 import { theme } from "@/app/lib/theme";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
