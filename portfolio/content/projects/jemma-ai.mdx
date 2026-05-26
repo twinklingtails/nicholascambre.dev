@@ -1,0 +1,162 @@
+---
+title: "Jemma AI"
+tagline: "A local-first AI assistant built from scratch — C++ inference, streaming voice, real auth, and tool calling that runs on hardware I own."
+description: "Jemma is a locally hosted conversational AI assistant with memory, streaming voice, and infrastructure integration — designed to be useful, observable, and entirely independent of cloud-based assistants."
+tags:
+  - C++
+  - llama.cpp
+  - TypeScript
+  - Next.js
+  - SSE
+  - Tailscale
+  - LLMs
+  - Local-first
+date: 2026-05-25
+published: true
+jemmaContext: |
+  Jemma is a local-first AI assistant Nicholas built from scratch. A C++
+  server with llama.cpp underneath handles inference and streams responses
+  via SSE; a sentence-aware TTS pipeline produces audio; a Next.js proxy
+  on nicholascambre.dev exposes a public scripted demo and an authenticated
+  chat interface that can talk to the live model over Tailscale. The
+  project's defining constraint is that nothing leaves Nicholas's network
+  unless a tool he explicitly enables sends it there.
+---
+
+## What it is
+
+Jemma is a locally hosted AI assistant.
+
+She runs on my home server, talks back through a streaming voice pipeline, keeps a structured log of every action she takes, and answers via a chat interface at [/jemma-lite](/jemma-lite) on this site.
+
+There is no OpenAI API call.
+
+There is no Anthropic API call.
+
+There is no cloud assistant in the middle telling me what their model thinks I'm allowed to ask.
+
+The inference happens on hardware I own. The chat goes through a proxy I wrote. The voice synthesis happens on the same network. The only thing crossing the public internet is the front-end's HTML and the SSE stream of tokens.
+
+You can talk to a scripted preview of her right now without signing in. The full live interface is gated for a reason — every prompt costs a real GPU cycle.
+
+---
+
+## What it does
+
+Today, Jemma is a streaming conversational assistant with audio.
+
+Concrete capabilities:
+
+- **Chat over Server-Sent Events**, token by token, with a working caret and realistic per-character delay.
+- **Sentence-aware text-to-speech**, where her responses get chunked at sentence boundaries (so audio plays in coherent units instead of one word at a time) and streamed to the browser as base64 MP3 frames.
+- **Bearer-token authentication** through a custom `AuthManager`, with SHA-256 password hashing and a `--set-password` CLI workflow for credential management.
+- **Graceful cancellation**, where pressing Stop in the UI both aborts the fetch (so the proxy stops listening) and posts to `/chat/cancel` (so the engine's cancel flag flips). The active inference exits within a token or two.
+- **Conversation history** per server-side session, cleared via `/chat/new`.
+- **Public scripted demo** for anonymous visitors — same chat UI, same streaming, same voice pipeline, but the responses come from a pre-written script. Lets visitors see how Jemma talks without burning real compute on every page-load.
+
+Tool calling and persistent memory are next on the roadmap.
+
+---
+
+## Why it exists
+
+A few reasons, in order of how much they matter:
+
+**Control over the policy.** When I talk to a cloud assistant, my conversation rents space in someone else's terms of service. Local means the policy is the one I wrote.
+
+**Nothing trains on it.** Anything I say to Jemma — code, ideas, half-baked questions, system designs — stays on my hardware. It is not aggregated, anonymized, used for fine-tuning, or sold downstream.
+
+**She works when the internet doesn't.** A local assistant doesn't care if Anthropic is having a bad day or if my home ISP went out.
+
+**Real systems engineering.** Building a working assistant from scratch — inference engine, streaming protocol, voice pipeline, auth, frontend — surfaces real problems you don't encounter when you're just gluing API calls together. That's the part I actually enjoy.
+
+The project is as much an infrastructure exercise as it is an AI one.
+
+---
+
+## How it works
+
+The architecture is three layers, each living on a different surface:
+
+```
+Browser
+  │
+  │  HTTPS (Cloudflare)
+  ▼
+Next.js proxy on nicholascambre.dev
+  │
+  │  HTTP over Tailscale
+  ▼
+C++ Jemma server (home hardware)
+  │
+  │  llama.cpp + local TTS
+  ▼
+Inference + voice synthesis
+```
+
+### The C++ server
+
+The core is a single C++ binary linked against [llama.cpp](https://github.com/ggerganov/llama.cpp). It uses [cpp-httplib](https://github.com/yhirose/cpp-httplib) for HTTP and SSE, with these endpoints:
+
+- `GET /health` — liveness probe, returns `{"status":"ok"}`.
+- `POST /auth/login` — accepts `{username, password}`, returns a bearer token. Credentials are stored as SHA-256 hashes in `jemma_config.json`.
+- `POST /auth/logout` and `GET /auth/verify` — token lifecycle.
+- `POST /chat` — the main event. Streams the model response as Server-Sent Events.
+- `POST /chat/cancel` — flips an atomic cancel flag the inference loop checks every token.
+- `POST /chat/new` — clears server-side conversation history.
+
+The chat endpoint runs inference through llama.cpp's streaming token callback. Each token gets emitted to the client as an SSE frame:
+
+A second worker thread handles TTS. The token callback buffers content in a sentence buffer; when it detects a sentence boundary (`.`, `!`, or `?` followed by whitespace), it hands the completed sentence off to the TTS worker via a thread-safe queue. The worker calls out to a local TTS service, gets back MP3 bytes, base64-encodes them, and ...writes them to the same SSE stream as separate frames:
+
+```
+event: audio
+data: {"mp3_b64": "..."}
+```
+
+The boundary-detection trick matters because naive "send each token to TTS" produces robotic, word-by-word audio. Sentence-level chunks sound natural.
+
+### The Next.js proxy
+
+The Jemma server runs on a Tailscale-only IP (`100.x.x.x` CGNAT range). The public site can't be on that IP — Cloudflare needs a real public hostname.
+
+The bridge is a catch-all Next.js route at `/api/jemma/[...path]/route.ts` that forwards requests over Tailscale, preserving the SSE stream byte-for-byte. The browser never sees the home server's address. If the proxy can't reach the server it returns a structured `503 jemma_offline` response so the frontend can fall back to the scripted demo gracefully.
+
+### The frontend
+
+Built in Next.js App Router. Same brand language as the rest of this site.
+
+The page at `/jemma-lite` has four states:
+
+- **Anonymous + Jemma online:** scripted demo + sign-in CTA + request-access form.
+- **Anonymous + Jemma offline:** scripted demo only, with a "live mode offline" label.
+- **Authed + Jemma online:** live chat. Real token streaming. Voice plays automatically when unmuted.
+- **Authed + Jemma offline:** scripted demo, with a "Jemma is sleeping" notice.
+
+The "scripted demo" is its own engine — a small playback library that takes pre-written conversations and replays them with realistic per-token timing, animated tool cards, and the same visual treatment as the live chat. Visitors see how she sounds without burning real inference cycles.
+
+---
+
+## What's coming next
+
+Three things on deck, in roughly the order I'll get to them:
+
+1. **Tool calling.** The Jemma server already speaks a `tool_call` / `tool_result` event protocol; the frontend already renders tool cards. What's missing is the engine-side glue that lets the model actually invoke registered tools and wait for results. Home Assistant integration is the first real use case — "Jemma, set the living room to 30%" should turn into a `home_assistant.set_brightness` call.
+
+2. **Persistent memory.** Right now history is per-session. A long-term memory layer (likely vector-store-backed, with selective recall) would let Jemma remember context across days. The challenge is doing it without making her feel like she's *trying* to remember everything you ever said.
+
+3. **A real voice loop.** Whisper for transcription, the existing TTS pipeline for output, and the kind of interrupt handling that lets you actually talk to her instead of typing. The voice client on the home network already does some of this; pulling it into a polished web experience is the next jump.
+
+---
+
+## What I'm proud of
+
+Two design calls I'd make the same way again.
+
+**Sentence-aware TTS.** Most "stream audio token by token" implementations produce robotic, choppy speech. Buffering until a real sentence boundary makes Jemma sound like she's *speaking*, not parsing. Small detail; big difference.
+
+**Cancellation that actually works.** Stopping a streaming model mid-thought is harder than people think. Jemma stops within a token by combining browser-side fetch abort with a server-side atomic flag the inference loop reads every iteration. Both mechanisms are real, and either alone would work; together it stops cleanly even under network weirdness.
+
+She isn't ChatGPT.
+
+She's mine.

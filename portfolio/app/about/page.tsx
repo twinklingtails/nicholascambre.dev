@@ -1,5 +1,7 @@
 // app/about/page.tsx
 
+import Image from "next/image";
+import type React from "react";
 import { Card } from "@/app/components/Card";
 import { SectionHeader } from "@/app/components/SectionHeader";
 import { StatusPill } from "@/app/components/StatusPill";
@@ -11,116 +13,307 @@ export default function AboutPage() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <header className="space-y-4">
         <StatusPill label="based in seattle, wa" />
-        <h1
-          className={`text-4xl font-semibold tracking-tight ${theme.text}`}
-        >
+        <h1 className={`text-4xl font-semibold tracking-tight ${theme.text}`}>
           About
         </h1>
       </header>
 
-      {/* ── Two-panel: Story + Connect ──────────────────────────────── */}
+      {/* ── Two-panel: Story + Right column stack ──────────────────── */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* My Story */}
-        <Card className="p-6">
-          <h2 className={`text-xl font-semibold ${theme.text}`}>My Story</h2>
-          <p
-            className={`mt-1 text-xs uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
-          >
-            louisiana → seattle
-          </p>
-
-          <div
-            className={`mt-4 space-y-3 text-sm leading-relaxed ${theme.textSoft}`}
-          >
-            <p>
-              I believe technology should empower, not overwhelm. My path
-              started with a habit of taking complex systems apart and
-              rebuilding them into simpler, more usable tools.
+        {/* ── Left column: story + principles ─────────────────────── */}
+        <div className="space-y-6">
+          {/* ── My Story ───────────────────────────────────────────── */}
+          <Card className="p-6">
+            <h2 className={`text-xl font-semibold ${theme.text}`}>My Story</h2>
+            <p
+              className={`mt-1 text-xs uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+            >
+              louisiana → seattle
             </p>
-            <p>
-              From AI assistants like{" "}
-              <strong className={theme.tealText}>Jemma</strong> to home
-              automation and streamlined servers, I focus on practical,
-              approachable builds — technology designed to be clear, reliable,
-              and human-centered.
+
+            <div
+              className={`mt-4 space-y-4 text-sm leading-relaxed ${theme.textSoft}`}
+            >
+              <p>
+                I didn&apos;t come from a traditional engineering background.
+                Most of what I know came from curiosity, rebuilding broken
+                systems, and spending years figuring out how infrastructure
+                works beneath the surface.
+              </p>
+
+              <p>
+                I was born in Ukraine, raised in Louisiana, and eventually made
+                my way to Seattle. Along the way, technology became less of a
+                hobby and more of a way to create stability — systems that were
+                understandable, reliable, and fully mine to operate.
+              </p>
+
+              <p>
+                That mindset shaped everything I build now. From AI
+                infrastructure like{" "}
+                <strong className={theme.tealText}>Jemma</strong> to
+                self-hosted automation systems and reverse-proxy environments, I
+                care less about trends and more about durability. I like systems
+                that are observable, maintainable, and still make sense six
+                months later.
+              </p>
+
+              <p>
+                Most of my work sits somewhere between infrastructure
+                engineering, automation, and operational tooling. I&apos;m
+                especially interested in local-first systems, resilient
+                architecture, and reducing complexity without reducing
+                capability.
+              </p>
+
+              <p>
+                My guiding principle is simple:{" "}
+                <span className={theme.brandGradientText}>
+                  clarity over complexity
+                </span>
+                .
+              </p>
+            </div>
+          </Card>
+
+          {/* ── How I think about systems ─────────────────────────── */}
+          <Card className="p-6">
+            <h2 className={`text-xl font-semibold ${theme.text}`}>
+              How I think about systems
+            </h2>
+            <p
+              className={`mt-1 text-xs uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+            >
+              working principles
             </p>
-            <p>
-              Raised in Louisiana and now based in Seattle, I bring resilience,
-              curiosity, and a builder&apos;s mindset to every project. My
-              guiding principle is simple:{" "}
-              <span className={theme.brandGradientText}>
-                clarity over complexity
-              </span>
-              .
+
+            <ul
+              className={`mt-4 space-y-3 text-sm leading-relaxed ${theme.textSoft}`}
+            >
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  <strong className={theme.text}>
+                    Clarity over complexity.
+                  </strong>{" "}
+                  The system you can&apos;t explain to your future self in six
+                  months is the system that&apos;s going to bite you.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  <strong className={theme.text}>Boring beats clever.</strong>{" "}
+                  Predictable infrastructure beats impressive infrastructure.
+                  The stack I trust is the one nobody has to notice.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  <strong className={theme.text}>
+                    Local-first by default.
+                  </strong>{" "}
+                  If a system needs the cloud to keep working, it&apos;s
+                  renting its own behavior from someone else&apos;s policy.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  <strong className={theme.text}>
+                    Observability before features.
+                  </strong>{" "}
+                  A feature you can&apos;t debug isn&apos;t a feature; it&apos;s
+                  a future incident.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  <strong className={theme.text}>Ship what&apos;s real.</strong>{" "}
+                  Aspirational architecture is fine when labeled as such. Lying
+                  about what works is how systems rot.
+                </span>
+              </li>
+            </ul>
+          </Card>
+        </div>
+
+        {/* ── Right column: stack of related cards ─────────────────── */}
+        <div className="space-y-6">
+          {/* Portrait */}
+          <Card className="p-6">
+            <p
+              className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+            >
+              {"// nicholas"}
             </p>
-          </div>
-        </Card>
+            <div className="mt-4 flex justify-center">
+              <div className={`rounded-full p-1 ${theme.brandGradient}`}>
+                <Image
+                  src="/me.jpg"
+                  alt="Nicholas Cambre"
+                  width={176}
+                  height={176}
+                  priority
+                  className="h-44 w-44 rounded-full object-cover"
+                />
+              </div>
+            </div>
+          </Card>
 
-        {/* Let's Connect */}
-        <Card className="p-6">
-          <h2 className={`text-xl font-semibold ${theme.text}`}>
-            Let&apos;s Connect
-          </h2>
-          <p
-            className={`mt-1 text-xs uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
-          >
-            channels open
-          </p>
+          {/* Let's Connect */}
+          <Card className="p-6">
+            <h2 className={`text-xl font-semibold ${theme.text}`}>
+              Let&apos;s Connect
+            </h2>
+            <p
+              className={`mt-1 text-xs uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+            >
+              channels open
+            </p>
 
-          <ul className="mt-4 space-y-2">
-            <ContactLink
-              href="mailto:nicholascambre0077@icloud.com"
-              label="nicholascambre0077@icloud.com"
-              icon={<MailIcon />}
-            />
-            <ContactLink
-              href="https://www.linkedin.com/in/nicholascambre"
-              label="linkedin.com/in/nicholascambre"
-              icon={<LinkedInIcon />}
-              external
-            />
-            <ContactLink
-              href="https://github.com/twinklingtails"
-              label="github.com/twinklingtails"
-              icon={<GitHubIcon />}
-              external
-            />
-          </ul>
+            <ul className="mt-4 space-y-2">
+              <ContactLink
+                href="mailto:nicholascambre0077@icloud.com"
+                label="nicholascambre0077@icloud.com"
+                icon={<MailIcon />}
+              />
+              <ContactLink
+                href="https://www.linkedin.com/in/nicholascambre"
+                label="linkedin.com/in/nicholascambre"
+                icon={<LinkedInIcon />}
+                external
+              />
+              <ContactLink
+                href="https://github.com/twinklingtails"
+                label="github.com/twinklingtails"
+                icon={<GitHubIcon />}
+                external
+              />
+            </ul>
+          </Card>
 
-          {/* Recruiter-friendly CTA */}
-          <div
-            className={`mt-6 rounded-lg border bg-[#0d1117]/60 p-3 ${theme.border}`}
-          >
+          {/* Currently Available */}
+          <Card className="p-6">
             <p
               className={`text-[10px] uppercase tracking-[0.2em] ${theme.tealText} ${theme.mono}`}
             >
-              // currently available
+              {"// currently available"}
             </p>
-            <p className={`mt-1 text-sm ${theme.textSoft}`}>
-              Open to roles in systems, automation, and AI tooling.
-              Let&apos;s talk about building simple, durable software together.
+            <p className={`mt-2 text-sm ${theme.textSoft}`}>
+              Open to roles in systems, automation, and AI tooling. Let&apos;s
+              talk about building simple, durable software together.
             </p>
-          </div>
-        </Card>
+          </Card>
+
+          {/* Right Now */}
+          <Card className="p-6">
+            <p
+              className={`text-[10px] uppercase tracking-[0.2em] ${theme.tealText} ${theme.mono}`}
+            >
+              {"// right now"}
+            </p>
+            <ul className={`mt-3 space-y-2 text-sm ${theme.textSoft}`}>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>Building Jemma&apos;s tool-calling layer</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  Scaling the hosting platform from 7 to 15 sites by year-end
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className={`mt-0.5 ${theme.tealText}`}>›</span>
+                <span>
+                  Finishing an Associate&apos;s, prepping Bachelor&apos;s
+                  coursework
+                </span>
+              </li>
+            </ul>
+          </Card>
+
+          {/* At a Glance */}
+          <Card className="p-6">
+            <p
+              className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+            >
+              {"// at a glance"}
+            </p>
+            <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2 text-sm">
+              <dt className={theme.muted}>Timezone</dt>
+              <dd className={theme.textSoft}>Pacific (UTC-8)</dd>
+
+              <dt className={theme.muted}>Replies</dt>
+              <dd className={theme.textSoft}>Async, within a day</dd>
+
+              <dt className={theme.muted}>Studying</dt>
+              <dd className={theme.textSoft}>
+                Associate&apos;s → Bachelor&apos;s
+              </dd>
+
+              <dt className={theme.muted}>Open to</dt>
+              <dd className={theme.textSoft}>
+                Systems, automation, AI tooling
+              </dd>
+            </dl>
+          </Card>
+        </div>
       </div>
 
-      {/* ── Mission Statement ───────────────────────────────────────── */}
-      <Card
-        surface="panel"
-        className="border-l-2 border-l-[#00b8c8] p-6"
-      >
+      {/* ── How I learned ──────────────────────────────────────────── */}
+      <Card surface="panel" className="border-l-2 border-l-[#00b8c8] p-6">
         <p
           className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
         >
-          // mission
+          {"// how i learned"}
+        </p>
+
+        <div
+          className={`mt-3 space-y-4 text-base leading-relaxed ${theme.textSoft}`}
+        >
+          <p>
+            Everything on this site was built before I&apos;d taken a single
+            college class.
+          </p>
+
+          <p>
+            YouTube. <em>Python 3 For Dummies</em>.{" "}
+            <em>C++ For Dummies</em>. The llama.cpp source code. A lot of
+            pair-programming with AI assistants when it sped things up, and a
+            lot of stubbornly debugging by hand when it didn&apos;t.
+          </p>
+
+          <p>
+            I&apos;m finishing an Associate&apos;s degree now and working toward
+            a Bachelor&apos;s — not because what I build today required the
+            credential, but because I want to formalize what I already know.
+          </p>
+
+          <p className={`pt-2 font-semibold ${theme.text}`}>
+            If anyone tells you that real systems require a CS degree, this site
+            is the counterexample.
+          </p>
+        </div>
+      </Card>
+
+      {/* ── Mission Statement ───────────────────────────────────────── */}
+      <Card surface="panel" className="border-l-2 border-l-[#ff4fa3] p-6">
+        <p
+          className={`text-[10px] uppercase tracking-[0.2em] ${theme.muted} ${theme.mono}`}
+        >
+          {"// mission"}
         </p>
         <blockquote
           className={`mt-2 text-lg italic leading-relaxed ${theme.textSoft}`}
         >
-          &ldquo;Practical solutions for everyday challenges. I challenge the
-          idea that programming requires advanced education by creating
-          accessible, functional tools designed to solve real-world problems
-          with clarity and efficiency.&rdquo;
+          &ldquo;Practical solutions for everyday challenges. I challenge the idea
+          that programming requires advanced education by creating accessible,
+          functional tools designed to solve real-world problems with clarity
+          and efficiency.&rdquo;
         </blockquote>
       </Card>
 
@@ -131,7 +324,10 @@ export default function AboutPage() {
         <div className="grid gap-3 sm:grid-cols-3">
           <HobbyCard prefix="// pixels" label="Website creation & design" />
           <HobbyCard prefix="// play" label="Gaming + streaming" />
-          <HobbyCard prefix="// outdoors" label="Exploring Seattle with Luna" />
+          <HobbyCard
+            prefix="// outdoors"
+            label="Exploring Seattle with Luna"
+          />
         </div>
       </section>
     </div>

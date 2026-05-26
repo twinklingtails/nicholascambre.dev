@@ -1,0 +1,180 @@
+---
+title: "Cloudflare + NGINX Edge"
+tagline: "Self-hosted edge routing and reverse proxy infrastructure that exposes internal services without surrendering control of the infrastructure underneath them."
+description: "A production-shaped edge layer built on Cloudflare, NGINX, and Docker — designed to keep routing, SSL, and exposure behavior visible and under direct control instead of hiding behind managed-hosting abstractions."
+tags:
+  - NGINX
+  - Cloudflare
+  - Docker
+  - Linux
+  - Networking
+  - Reverse Proxy
+  - DevOps
+  - Self-hosted
+date: 2026-05-25
+published: true
+jemmaContext: |
+  Edge-routing and reverse proxy infrastructure for Nicholas's self-hosted
+  environment. Cloudflare handles DNS, TLS, and edge protection; NGINX
+  handles internal routing; Docker isolates the underlying services.
+  Designed so any new service can be exposed safely without opening
+  another public port.
+---
+
+## What it is
+
+Cloudflare + NGINX Edge is the networking layer that sits in front of nearly everything else I run.
+
+Most hosting platforms abstract infrastructure away until something breaks. This project does the opposite — it keeps routing, SSL, exposure, and deployment behavior visible and under direct control.
+
+Cloudflare handles edge protection and DNS.
+NGINX handles internal routing.
+Docker isolates the services underneath.
+
+Together they make a centralized edge layer capable of exposing internal systems without turning the infrastructure into a pile of randomly forwarded ports.
+
+If every service needs its own public IP and manual configuration, the architecture probably needs work.
+
+---
+
+## What it does
+
+The platform acts as the public entry point for self-hosted applications, APIs, dashboards, and AI infrastructure.
+
+In production today it handles:
+
+- **Reverse proxy routing** — every subdomain maps to a specific upstream service on the internal network
+- **TLS termination** at the edge, with strict ciphers and HSTS
+- **Cloudflare DNS** managed alongside the rest of the deployment config
+- **DDoS mitigation and bot filtering** through Cloudflare's edge rules
+- **Port abstraction** — services never bind to public ports; everything passes through NGINX first
+- **Container-aware routing** for Dockerized backends, including dynamic upstream resolution
+- **Centralized logging** across Cloudflare → NGINX → service, so a slow request can be traced through every layer
+- **Health checks and automated recovery** for upstream services that crash or hang
+
+The services currently fronted include:
+
+- This Next.js site (nicholascambre.dev)
+- The Jemma AI proxy (`/api/jemma/*` over Tailscale to a separate home box)
+- Home Assistant dashboards
+- Internal monitoring and admin interfaces
+- Self-hosted APIs and webhook receivers
+- Development environments
+- Remote administration paths
+
+Most services remain isolated internally and are only reachable through the proxy layer. That keeps the infrastructure easier to monitor, easier to secure, and significantly easier to scale.
+
+---
+
+## Why it exists
+
+Most self-hosted environments eventually turn into networking chaos.
+
+Random ports. Mixed SSL configurations. Services exposed directly to the internet because "it was easier this way for now." No centralized visibility into how traffic actually flows through the system.
+
+This project exists to solve that problem before it becomes one.
+
+The goal was to create a single edge-routing layer capable of handling deployment exposure, SSL management, traffic protection, and routing behavior consistently across every internal service — without having to think about it again every time a new project gets stood up.
+
+Over time, the stack evolved into a broader infrastructure engineering environment focused on edge networking, reverse proxy architecture, operational visibility, and service isolation. It also became a practical way to learn how real production infrastructure behaves under operational load — instead of relying entirely on managed hosting abstractions that hide everything until they fail.
+
+Reliable infrastructure is usually boring infrastructure.
+
+That's the point.
+
+---
+
+## How it works
+
+The architecture is three concentric layers, each with a specific job.
+
+### The edge: Cloudflare
+
+Cloudflare sits between the public internet and the origin. Every request to nicholascambre.dev — or any subdomain that resolves through it — hits Cloudflare first.
+
+Responsibilities at this layer:
+
+- **DNS** for every public hostname
+- **TLS termination** with modern ciphers, HSTS, and automatic certificate management
+- **Edge caching** for static assets, with cache-busting via build-time fingerprints
+- **DDoS protection and bot filtering** without my having to configure rate limits per service
+- **Geographic routing** if I ever need it (I currently don't, but the option is there)
+
+The big advantage: Cloudflare is what's on the public internet, not my home network. My origin IP isn't directly reachable; attackers see Cloudflare's edge and have to come through it.
+
+### Internal routing: NGINX
+
+Behind Cloudflare, NGINX is the reverse proxy layer that decides which internal service handles which request. It runs in a Docker container on the same host as most upstream services.
+
+Each subdomain or path prefix maps to a specific upstream:
+
+- `nicholascambre.dev` → the Next.js production server on port 4100
+- `nicholascambre.dev/api/jemma/*` → the catch-all proxy that forwards over Tailscale to the Jemma server on a separate machine
+- Internal dashboards → their own containerized backends on internal Docker networks
+- Admin interfaces → restricted by IP allowlist *before* the upstream service is even reached
+
+NGINX also handles:
+
+- Upstream health checks and automatic failover when a backend stops responding
+- Reverse proxy logging in a structured format that ships to a central log aggregator
+- WebSocket and SSE pass-through for long-lived connections (Jemma's streaming responses depend on this)
+
+### Service isolation: Docker
+
+Underneath the proxy layer, services run inside Docker containers with explicit network boundaries. Most containers don't expose ports to the host at all — they only listen on internal Docker networks that NGINX can reach.
+
+That gives me:
+
+- **Network-level isolation** between services, so a compromised container can't trivially pivot
+- **Restart and recovery behavior** managed by Docker, not by ad-hoc systemd units
+- **Predictable deployment** — `docker compose up -d` is the same shape for every service
+- **Easy local testing** — the same compose files work on a dev machine
+
+### A concrete request flow
+
+A real example so the architecture isn't just diagrams.
+
+When a visitor opens `/jemma-lite` and sends a message:
+
+1. The browser request hits Cloudflare's edge for `nicholascambre.dev`.
+2. Cloudflare terminates TLS, applies WAF rules, and forwards to the origin.
+3. NGINX on the origin matches the `location /` block and proxies to the Next.js container on port 4100.
+4. Next.js handles the page, but for the streaming chat request it forwards through `/api/jemma/chat` — its own internal proxy.
+5. That route hits NGINX a second time (briefly), which routes it back to the Next.js Node runtime since it's an internal API call.
+6. The Node runtime opens an HTTP connection over Tailscale to the C++ Jemma server on a different physical machine.
+7. The Jemma server streams Server-Sent Events back through every layer in reverse — Tailscale, Next.js, NGINX, Cloudflare — and into the visitor's browser.
+
+Three hops, three observable surfaces. When a request is slow, I can tell you which layer.
+
+The alternative — a single monolith with everything inside one process — is simpler to draw but much harder to debug, secure, or scale.
+
+---
+
+## Why this shape matters
+
+The natural failure mode for self-hosted infrastructure is sprawl. One project gets a port forwarded for "testing." Another gets a quick `0.0.0.0` bind because "it's just a dashboard." Six months later, nobody can list every service that's reachable from the internet, let alone whether they're all patched.
+
+This shape — *everything goes through the edge* — makes sprawl visible. If I want to expose something new, I add an NGINX config block and a Cloudflare DNS entry. Both live in version-controlled configuration. Both are immediately apparent during review.
+
+Three properties fall out of that for free:
+
+- **The audit story is trivial.** "What's publicly exposed right now?" is answered by reading two files.
+- **TLS is a non-event.** Every service inherits the edge's certificate; nothing rolls its own.
+- **Adding a service is consistent.** New project → docker compose + NGINX block + DNS entry. Same shape every time.
+
+Boring is the goal. Boring infrastructure is the infrastructure that doesn't wake you up at 2 a.m.
+
+---
+
+## What's next
+
+Real next steps, in priority order:
+
+1. **Cloudflare Tunnel.** Closes the origin host's public-facing ports entirely. The home server becomes unreachable from the internet — only Cloudflare's edge can talk to it, through an outbound tunnel the server itself initiates. Most attack-resistant configuration short of an air-gap.
+2. **NGINX config in version control.** Currently lives on the server. Moving it to git with a deploy hook means rollbacks are `git revert` instead of `vim /etc/nginx/nginx.conf`.
+3. **Per-subdomain access policies via Cloudflare Access.** Some internal dashboards don't need to be on the public internet at all — they should require auth at the edge before the request ever reaches NGINX. Cloudflare Access handles this with Google sign-in or hardware keys.
+4. **Structured log shipping.** NGINX logs are useful when you have them; they're invisible when they only live on one server's disk. Centralizing them — even just to a single file on a different machine — turns "I think something's slow" into "here are the percentiles for the last hour."
+
+Trends change fast.
+
+Durable systems never go out of style.

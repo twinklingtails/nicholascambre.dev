@@ -1,0 +1,156 @@
+---
+title: "Managed Self-Hosted Web Platform"
+tagline: "Multi-tenant Next.js hosting with hands-on client engagement — Docker, Cloudflare, PM2, all on hardware I own."
+description: "A centralized self-hosted platform running 7 production Next.js sites for content creators and small businesses on a single server, with deep client onboarding, isolated deployments, and infrastructure I fully control. On track to host 15 by year-end."
+tags:
+  - Next.js
+  - Docker
+  - NGINX
+  - Cloudflare
+  - PM2
+  - TailwindCSS
+  - Multi-tenant
+  - Self-hosted
+date: 2026-05-25
+published: true
+jemmaContext: |
+  Multi-tenant Next.js hosting platform Nicholas operates from a single
+  self-managed server. Hosts 7 production sites for content creators and
+  small businesses today; on track for 15 by year-end. Built on Docker,
+  PM2, NGINX, and Cloudflare. Each client gets isolated deployment, an
+  admin interface, and a hands-on onboarding process that includes four
+  two-hour design meetings before a line of code gets written.
+---
+
+## What it is
+
+Managed Self-Hosted Web Platform is the multi-site hosting environment I run for content creators and small businesses out of my own infrastructure.
+
+Most small business websites end up trapped inside expensive subscription platforms, fragmented hosting providers, or bloated website builders that become increasingly difficult to maintain as the business changes.
+
+This project does the opposite.
+
+Every hosted site lives in its own Docker container on hardware I own, behind a single NGINX + Cloudflare edge layer, with PM2 supervising processes underneath. Today it runs 7 production sites for paying clients. By the end of the year, the same stack is expected to be hosting 15.
+
+The goal is simple:
+
+Reliable hosting. Predictable infrastructure. No unnecessary complexity.
+
+---
+
+## What it does
+
+The platform hosts independently managed websites through isolated deployment environments while centralizing infrastructure management underneath them.
+
+The core capabilities:
+
+- **Multi-tenant isolation.** Each client's site runs in its own Docker container with separate process tree, environment variables, and filesystem boundaries. One client's misbehaving build can't take down another client's site.
+- **Cloudflare-fronted edge.** Every hosted domain gets full edge TLS, HSTS, DDoS protection, and DNS managed through Cloudflare — no per-site certificate management on my end, no public-facing origin IP.
+- **NGINX routing by hostname.** Each tenant gets a dedicated server block keyed by domain. Adding a new site is a single config block per layer, not a server-wide reconfigure.
+- **PM2 supervision.** Application processes auto-restart on crash with per-tenant logging, so operational issues stay traceable to the specific tenant they affect.
+- **Centralized observability.** One dashboard, one log destination, one place to answer "is everything up?" for all tenants at once instead of seven separate vendor consoles.
+- **Tenant-owned domains.** Clients keep ownership of their own DNS registrations and grant me Cloudflare admin access. The domain stays theirs even if our arrangement ever ends.
+- **Self-service admin layer.** Each site ships with an admin interface so the client can manage images, branding colors, and content updates themselves — without filing a ticket every time a logo changes.
+
+The infrastructure layer stays centralized. The presentation layer stays flexible.
+
+---
+
+## Why it exists
+
+This project started from a simple observation.
+
+Most small websites are dramatically overcomplicated for what they actually need to do. Subscription platforms pile on recurring costs, fragile plugins, unnecessary abstractions, and hosting layers that site owners rarely understand or control. When something breaks, the owner is at the mercy of a support queue.
+
+I wanted to build a hosting environment that stripped away most of that — while still letting each site feel personalized and professionally maintained.
+
+The hands-on engagement model matters as much as the infrastructure.
+
+Before a line of code gets written for a new client, the onboarding includes **four dedicated two-hour design meetings** spread over a couple of weeks. We talk through site structure, branding, layout preferences, content organization, information architecture, and the actual user experience the client wants to deliver. No generic templates, no "pick a theme and ship it." The deliverable at the end of those eight hours is a site designed around how the *client* wants their content presented, not how a website builder forced it into a box.
+
+That investment is also what makes the platform sustainable. Sites built around real conversations stay maintained because the client understands what's there. Sites built on top of generic templates rot the moment something needs to change.
+
+The project also acts as a practical infrastructure engineering environment for learning how to operate multi-tenant deployments, reverse proxy routing, container orchestration, and long-term hosting reliability at real scale.
+
+Trends in web tooling change constantly.
+
+Reliable infrastructure principles usually do not.
+
+---
+
+## How it works
+
+The platform runs on dedicated Linux infrastructure I own and maintain directly.
+
+### The host hardware
+
+- **Dual Intel Xeon** processors
+- **95 GB ECC** memory
+- **5 TB** of storage
+- **5 Gb** local networking
+
+This is real infrastructure — not a Raspberry Pi tucked behind a TV. The decision to invest in ECC memory and Xeon-class compute was deliberate: clients are paying for uptime, and ECC catches the kind of silent bit-flip corruption that consumer hardware never notices until it's too late.
+
+### Container isolation
+
+Each tenant runs inside its own Docker container.
+
+That gives every site:
+
+- A clean filesystem boundary, so file conflicts between tenants are impossible
+- An isolated process tree, so one client's runaway Node process doesn't impact another's
+- Independent environment variables and secrets — no cross-tenant credential exposure
+- Predictable restart behavior managed by Docker, not by ad-hoc systemd units
+
+Shared resources (CPU, memory, network) are currently pooled at the host level, which works comfortably for 7 tenants. Per-container resource quotas are on the roadmap as the platform scales toward 15.
+
+### Networking and edge
+
+Cloudflare sits at the public edge. NGINX handles internal routing.
+
+The full path for any inbound request:
+
+1. **Cloudflare's edge** handles DNS resolution, TLS termination, DDoS filtering, and bot mitigation. The origin server's IP is never directly reachable from the public internet.
+2. **NGINX** on the host receives the forwarded request and matches the `server_name` directive against the requested hostname.
+3. **Internal Docker network** routes the request to the appropriate tenant's container on its private port.
+4. **The tenant's Next.js application** handles the request and returns the response, which travels back through the reverse of the same path.
+
+Adding a new tenant is one NGINX server block plus one Cloudflare DNS entry plus one Docker container in the compose stack. Consistent shape every time.
+
+### Process management
+
+PM2 supervises the Node processes inside each container, with separate logging streams per tenant. If a process crashes, PM2 restarts it. If a tenant deploys broken code, only that tenant's site goes down — not the rest of the platform.
+
+All tenants are built with **TailwindCSS** on the frontend, which keeps the asset pipeline consistent across the fleet. Each client provides their own branding assets and copy; my job is making sure they render reliably.
+
+---
+
+## A real onboarding
+
+The platform isn't theoretical — it's what I do for paying clients. Here's the actual end-to-end flow:
+
+1. **Client says yes.** We agree on scope and timeline.
+2. **Four two-hour meetings, spread over a couple of weeks.** We work through structure, branding, layout, content organization, and the experience the client actually wants to deliver. Eight hours of design conversation before any code.
+3. **Domain handoff.** The client registers (or already owns) the domain and grants me Cloudflare admin access. The domain stays in their name.
+4. **Site build.** Fresh Next.js project styled with TailwindCSS, populated with their assets and copy, hooked into the platform's standard admin layer.
+5. **Deployment.** A new Docker container is added to the compose stack with its own internal port. NGINX gets a new server block for the domain. Cloudflare gets the DNS entry. PM2 picks up the process for supervision.
+6. **Site goes live.** TLS is automatic via Cloudflare. Monitoring is rolled into the existing dashboards. The client gets admin credentials so they can manage their own content going forward.
+
+End-to-end the *deployment* part takes about 30 minutes once the design is settled. The bottleneck on scaling 7 → 15 isn't the infrastructure — it's the eight hours of design conversation per client. Which is the part I refuse to compress.
+
+---
+
+## What's next
+
+Real next steps, in priority order:
+
+1. **Deployment automation.** Currently each new tenant means manual edits to `docker-compose.yml`, the NGINX config, and Cloudflare DNS. A simple CLI that takes `add-tenant <name> <domain>` and stands up all three would cut deployment time from 30 minutes to under five — and remove the class of mistakes that happen when you forget one of the three layers.
+2. **Per-tenant resource quotas.** All 7 containers currently share the host's resource pool. Setting Docker CPU and memory limits per tenant would prevent one site's traffic spike from degrading the others, and give me clean per-tenant capacity metrics for scaling decisions.
+3. **Per-tenant backup + restore drills.** Backups happen at the host level today. Container-level snapshots on a schedule, with quarterly restore-to-fresh-VM tests, would let me recover a single tenant without bringing the rest of the fleet into the blast radius.
+4. **A second blade.** Scaling 7 → 15 on one host is tractable. Past 15, the single-host shape becomes a real risk — one hardware failure takes down every client. A second blade with shared NGINX routing and synchronized data is the natural next step.
+
+Own the infrastructure.
+
+Keep the stack understandable.
+
+Build systems that survive longer than the current trend cycle.

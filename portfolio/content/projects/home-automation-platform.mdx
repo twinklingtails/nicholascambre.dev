@@ -1,0 +1,165 @@
+---
+title: "Home Automation Platform"
+tagline: "Local-first automation infrastructure built around Home Assistant, MQTT, Docker, and UniFi networking — the kind that keeps working when the cloud doesn't."
+description: "A self-hosted automation platform that pulls lighting, cameras, media, presence, and infrastructure telemetry into a single event-driven system designed for reliability, observability, and low-latency control."
+tags:
+  - Home Assistant
+  - MQTT
+  - Node-RED
+  - Docker
+  - Linux
+  - UniFi
+  - Networking
+  - Automation
+date: 2026-05-25
+published: true
+jemmaContext: |
+  Self-hosted smart-home and infrastructure orchestration platform built
+  around Home Assistant, MQTT, Node-RED, Docker, and UniFi networking.
+  Combines lighting, cameras, media, presence detection, and infrastructure
+  telemetry into a single local-first event-driven system designed to keep
+  working when cloud services don't.
+---
+
+## What it is
+
+Home Automation Platform is a self-hosted automation environment built around Home Assistant, MQTT, Docker, and UniFi networking.
+
+Most smart-home vendors want you to live entirely inside their app. This project does the opposite — it pulls lighting, cameras, media, presence, and infrastructure telemetry into a single layer I actually own, so I can build automations that cross vendor lines.
+
+The goal was never "smart home for the sake of smart home." The goal was operational visibility, low-latency control, and systems that continue working even when cloud services fail.
+
+A light switch should still work if somebody's API endpoint goes down.
+
+---
+
+## What it does
+
+The platform coordinates devices, telemetry, and infrastructure through a centralized event-driven architecture.
+
+Current device and service integrations:
+
+- **Home Assistant** as the orchestration layer
+- **MQTT** as the event bus
+- **Node-RED** for visual automation flows that don't fit Home Assistant's YAML model
+- **UniFi** networking hardware for presence, connectivity, and network telemetry
+- **Wyze cameras** for monitoring and motion-triggered events
+- **GE Cync, Govee, and Hubspace** lighting from three different vendors, unified under one automation layer
+- **Roku and Samsung** smart TVs and media systems
+- **MyQ** garage door integration
+
+The automation layer currently handles:
+
+- Presence-aware workflows triggered by phone connectivity
+- Multi-vendor lighting orchestration with scene management
+- Time-of-day–aware behavior (the same trigger does different things at 8 a.m. vs. 10 p.m.)
+- Camera-triggered notifications and event capture
+- Real-time device telemetry into a centralized dashboard
+- Infrastructure-aware automations that react to network state
+- Notification routing through Discord for anything that needs my attention
+- Device state synchronization across vendor boundaries
+- Service health monitoring for the automation stack itself
+
+Everything is designed around predictable behavior, short feedback loops, and low operational friction.
+
+Cloud dependencies are convenient right up until they break.
+
+---
+
+## Why it exists
+
+Most commercial smart-home ecosystems are fragmented by design. Every vendor wants its own app, its own cloud, and its own automation logic. The result is a house full of devices that can each do impressive things in isolation but don't coordinate.
+
+That's brittle by construction.
+
+I wanted a single automation layer that could coordinate devices regardless of vendor, expose infrastructure telemetry in one place, and keep running locally even if outside services became unreliable. The vendor app stops being the source of truth; Home Assistant does.
+
+Over time, the project evolved from "make my lights smart" into a broader infrastructure and systems engineering environment focused on event-driven architecture, local-first design, infrastructure observability, and reliable orchestration. It also became a practical environment for learning how real systems behave over time — not just when everything works perfectly, but when devices fail, APIs hang, containers restart, or networks become unstable.
+
+The most interesting engineering happens when things break.
+
+Reliable systems are more interesting than flashy demos.
+
+---
+
+## How it works
+
+Home Assistant runs at the center as the orchestration layer. Around it, MQTT acts as the event bus, Node-RED handles flows that benefit from visual representation, and Docker isolates the supporting services.
+
+### The architecture in one paragraph
+
+Devices publish state changes into MQTT topics. Home Assistant subscribes to those topics and updates its internal state model. Automations are triggered by state changes, schedules, or external events, and they run their logic against whatever's currently true — not against an assumed state. Node-RED handles the flows that involve more conditional branching than YAML can express comfortably. UniFi feeds presence and connectivity events back into MQTT, which means automations can react to network conditions, not just device states.
+
+### A representative automation
+
+A real example, because abstract bullet lists don't communicate what the platform actually does.
+
+When my phone disconnects from the home WiFi, the UniFi controller publishes a presence event to MQTT. Node-RED picks it up and debounces for 90 seconds — short disconnects from things like an elevator or a microwave shouldn't fire the entire leaving-home sequence.
+
+If the device is still disconnected after the debounce window, the flow runs:
+
+1. **Lights drop to zero** in the rooms I was likely in (based on last motion sensor activity).
+2. **Thermostat shifts to away mode** with a different setpoint depending on season.
+3. **Garage door state is queried** and a Discord ping fires if it's still open.
+4. **Cameras switch to active recording mode** for the windows that face the driveway and back door.
+5. **A Discord notification fires** summarizing what just happened, so I can verify the system did what I expected.
+
+The reverse flow runs on reconnect, but the lighting recipe depends on time of day — coming home at 7 p.m. brings up warm-tone lighting at 60%; coming home at 11 p.m. brings up dim hallway lighting only.
+
+That's the level of detail the platform supports. Automation as a coordinated system, not "if motion, turn on light."
+
+### Network awareness
+
+UniFi infrastructure is integrated into the automation layer specifically because the network knows things the devices don't. The UniFi controller can tell me:
+
+- Whether a specific device is on WiFi or wired
+- Signal strength and connection health per device
+- DHCP lease activity
+- New devices appearing on the network
+
+That information feeds back into MQTT and becomes a usable signal. "Phone disconnected from the home AP" is more reliable than "Bluetooth presence sensor lost track" — and it doesn't require running a presence app in the background.
+
+### Failure modes
+
+Every reliable system is defined by how it behaves when something goes wrong, not when everything works.
+
+A few of the patterns I've built in over time:
+
+- **Watchdogs on flaky devices.** Some sensors stop responding intermittently. Automations that depend on them check `last_seen` and refuse to fire on stale data.
+- **Idempotent triggers.** A double-fire shouldn't matter. Turning off an already-off light is a no-op; the automation doesn't care.
+- **Local fallback.** If MQTT broker hiccups, the most critical automations have local-only fallbacks in the Home Assistant core so the house doesn't go dark.
+- **Failure notifications.** When an integration's API starts throwing 500s, I get a Discord ping. I'd rather know early than discover it when the light doesn't come on.
+
+The system is intentionally conservative. It does fewer things than it could, more reliably.
+
+---
+
+## Why local-first
+
+Cloud-first home automation has a single fatal property: it stops working when the cloud does.
+
+Most people don't notice this until the day their lights don't turn on because Amazon had an AWS incident and the vendor's "cloud-required" app stopped resolving. By then it's too late to redesign around it.
+
+Local-first means:
+
+- The MQTT broker, Home Assistant, and Node-RED all run on hardware I own
+- Devices that *can* operate without cloud connectivity are configured to (most of the GE Cync stuff, some of the UniFi gear)
+- Cloud integrations exist where they add real value — but they're never the only path
+- The system continues functioning during internet outages
+
+That last property changed how I think about home automation. The smart home shouldn't be smarter than the dumb one when the internet's out. It should *at least* match it.
+
+---
+
+## What's next
+
+Real next steps, in priority order:
+
+1. **Jemma AI integration.** Wire the C++ Jemma server into Home Assistant via a tool-calling layer. "Jemma, movie night" should map to a real Home Assistant scene activation, not a separate vendor's voice ecosystem. Most of the engine-side groundwork is done; what's missing is the tool registration.
+2. **Centralized observability.** Currently I have to open Home Assistant, then UniFi, then Docker logs to debug a problem. A single dashboard that shows the state of every layer simultaneously would cut debugging time significantly.
+3. **Automation tests.** Some flows are too important to break silently. Writing actual integration tests against the automation logic — even just smoke tests — would catch regressions before I notice the house is misbehaving.
+4. **Backup-and-restore drills.** Home Assistant has backup tooling. I've never tested restoring from one. A backup that's never been tested isn't a backup; it's a story.
+
+Trends change fast.
+
+Durable systems never go out of style.

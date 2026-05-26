@@ -1,0 +1,187 @@
+---
+title: "Jemma Voice Pipeline"
+tagline: "Local neural text-to-speech that gives Jemma her voice — 23ms per sentence on a 2080 Ti. GLaDOS-inspired, never leaves the network."
+description: "A self-hosted Python TTS service that turns Jemma's responses into audio in real time. 23ms per-sentence inference on consumer GPU hardware. Inspired by GLaDOS from Portal 2 because every other LLM sounds the same."
+tags:
+  - Python
+  - TTS
+  - Neural Audio
+  - GPU
+  - Real-time
+  - HTTP API
+  - Self-hosted
+  - PyTorch
+date: 2026-05-25
+published: true
+jemmaContext: |
+  The Python text-to-speech service that turns Jemma's text responses
+  into audio. Runs locally on an RTX 2080 Ti at roughly 23 milliseconds
+  per sentence — real-time territory on consumer hardware. Renders each
+  sentence as MP3 and returns it over HTTP to the C++ Jemma server.
+  Voice is inspired by GLaDOS from Portal 2 because Jemma was supposed
+  to have a character, not the same cheerful customer-service voice
+  every other LLM uses.
+---
+
+## What it is
+
+Jemma Voice Pipeline is the Python service that gives Jemma her voice.
+
+The text generation happens in C++ on top of llama.cpp. The voice — the actual *sound* of her talking back — happens in a separate Python service running on a GPU. The two layers are stitched together over HTTP, sentence by sentence, and the audio streams to your browser as base64 MP3 frames.
+
+It's the part of Jemma that makes her feel less like a chat interface and more like an entity.
+
+It also sounds like GLaDOS.
+
+That was deliberate.
+
+---
+
+## What it does
+
+The pipeline accepts text and returns audio. Everything else exists in service of doing that fast enough and reliably enough to feel like a real conversation.
+
+> Per-sentence inference latency: **~23ms on an RTX 2080 Ti.** Real-time territory on consumer hardware that's two GPU generations old.
+
+The core capabilities:
+
+- **Real-time neural text-to-speech** on a local GPU. Roughly 23 milliseconds from sentence-in to MP3-out, which is faster than a single video frame at 60fps.
+- **HTTP API** that takes `{"input": "text here"}` and returns rendered audio as MP3 bytes. Single endpoint, single shape.
+- **Health check endpoint** at `/health` that the C++ Jemma server probes at startup, so I know immediately if voice will work on a given session before Jemma even starts talking.
+- **GLaDOS-inspired voice** rendered by a neural model fine-tuned on a curated corpus of in-game audio. Not a perfect clone — distinctly inspired by the original, with the deadpan cadence and flat affect that made the character recognizable.
+- **Single-sentence rendering.** The service is intentionally stateless — every request renders one sentence. The C++ server is responsible for chunking; the voice service just turns text into audio as fast as it can.
+- **MP3 output, not WAV.** Smaller payload, much better for streaming over SSE.
+
+Today it runs on the same physical machine as the rest of Jemma's infrastructure but as a separate process, with its own GPU allocation, so model loading doesn't block inference.
+
+---
+
+## Why it exists
+
+Two real reasons, both unrelated to "I needed a TTS."
+
+**Every cloud LLM has the same customer-service voice.**
+
+ChatGPT, Claude, Gemini, Siri, Alexa — they all sound like they were trained by the same focus group. Pleasant, neutral, slightly upbeat, indistinguishable from each other once you close your eyes. None of them have a character.
+
+Jemma was supposed to have one.
+
+Giving her a recognizable voice — specifically a *character* voice from a piece of fiction known for its dry, deadpan AI — does more for personality than any system prompt can. You hear her speak once and you remember it. That's the bar.
+
+**Cloud TTS is a privacy hole.**
+
+Every "easy" TTS service requires sending the text you want spoken to a third party. Including the text the local model just generated. Defeats the whole point of running the model locally if every word it produces gets shipped to a vendor on the way to your speakers.
+
+A local TTS service closes that hole. Text never leaves the host. The audio is rendered, returned, and the input is gone the moment the request closes.
+
+---
+
+## How it works
+
+The pipeline is a small Python service in front of a much larger neural model.
+
+### The API
+
+A single HTTP endpoint, deliberately simple:
+```
+POST /v1/audio/speech
+Content-Type: application/json
+{ "input": "Hi. I'm awake." }
+→ 200 OK
+Content-Type: audio/mpeg
+<MP3 bytes>
+```
+And a health probe: 
+```
+GET /health → 200 OK
+```
+That's the entire public surface. The C++ Jemma server calls this exactly twice per assistant response: once at startup (`/health`) to know whether voice is even possible this session, and once per sentence as Jemma's text streams in.
+
+### Sentence-by-sentence rendering
+
+The reason the API is one-sentence-per-request — instead of "stream me the whole response" — comes from a real engineering tradeoff:
+
+- **Per-sentence rendering** keeps each request short and bounded. If a sentence fails or times out, the user loses one sentence of audio, not the whole turn.
+- **Per-sentence rendering** lets audio start playing before the model has finished generating the full response. Jemma can start speaking her first sentence while she's still writing her second.
+- **Per-sentence rendering** matches how humans actually read aloud. Word-by-word TTS sounds robotic; sentence-level chunks have natural prosody.
+
+The C++ server's job is to detect sentence boundaries in the token stream as they happen. This Python service's job is to render whatever shows up at the door.
+
+### The model
+
+The voice itself is a neural TTS model running on a local GPU. The model takes text, runs it through phoneme/token encoding, generates a mel spectrogram, vocodes it into audio waveform, and the service encodes that as MP3 before returning it.
+
+The voice corpus was built from publicly available GLaDOS audio from Portal 2 — phoneme variety is a real concern when training on a single character, so the corpus had to be curated carefully to cover enough of the phonetic space to handle arbitrary input text.
+
+The output isn't a perfect impersonation. It's closer to a character study — the cadence, the flat affect, and the slightly clinical word stress are there. Anyone who's played Portal 2 will recognize what it's reaching for.
+
+### Why Python
+
+The C++ Jemma server handles inference and orchestration because performance and concurrency matter there.
+
+The TTS pipeline is Python because *that's where the entire neural audio ecosystem lives*. PyTorch, the model architectures, the vocoders, the audio libraries, the inference helpers — almost all of it is Python-first. Trying to rewrite this in C++ would be fighting the ecosystem for no real performance benefit; the GPU is the bottleneck either way.
+
+Two-language architecture for one assistant. C++ where it earns its keep, Python where it earns its keep. Wrong call would be picking one for everything.
+
+### How 23ms is even possible
+
+Twenty-three milliseconds per sentence isn't an accident.
+
+Three design choices that made it possible:
+
+- **Model architecture chosen for real-time inference.** Some neural TTS models prioritize voice quality at the cost of latency (Tortoise can take 5-20 seconds per sentence). The architecture here was picked specifically because its forward pass is fast enough to render in real time on consumer hardware.
+- **Model held warm in GPU memory between requests.** Loading model weights and CUDA kernels takes hundreds of milliseconds. The service loads once on startup and stays warm; per-request cost is just the forward pass.
+- **No CPU round-trip for audio encoding.** The MP3 encode happens with libraries that minimize the GPU-to-CPU handoff, so the wall-clock cost stays dominated by inference, not data shuffling.
+
+For context: most cloud TTS services round-trip in **200-500ms**. Most local neural TTS on similar hardware lands in the **200-800ms range**. Getting under 50ms required choosing the right model architecture, then engineering the pipeline around it.
+
+The 2080 Ti is two GPU generations old at this point. A modern card would push the number even lower.
+
+---
+
+## A real request lifecycle
+
+When someone sends a message to Jemma and the response streams back with audio, here's what happens on the voice side:
+
+1. Jemma's C++ server starts generating tokens from llama.cpp.
+2. Each token gets pushed to the SSE stream *and* appended to an internal sentence buffer.
+3. When the sentence buffer ends with `.`, `!`, or `?` followed by whitespace, the C++ server hands the completed sentence to its TTS worker thread.
+4. The TTS worker calls `POST /v1/audio/speech` on this Python service with the sentence text.
+5. The Python service loads the input into the model, runs inference on the GPU, vocodes the spectrogram, encodes to MP3. Round-trip: roughly 23ms.
+6. MP3 bytes return to the C++ server.
+7. The C++ server base64-encodes the MP3 and writes it to the same SSE stream as a `data: { "mp3_b64": "..." }` frame.
+8. The browser decodes the base64, queues the MP3 in an `<audio>` element, and plays it.
+
+This happens for every sentence in parallel with the next sentence being generated. By the time the last sentence is rendered, the user has heard the first three already.
+
+Felt latency from "Jemma's text appeared on screen" to "Jemma's voice is playing" is essentially zero. The audio arrives before your brain registers that it shouldn't be there yet.
+
+---
+
+## What's next
+
+Real next steps, in priority order:
+
+1. **Streaming response.** Right now each request is fully-rendered before returning. A streaming response that emits audio chunks as they're generated would push the *first* byte of audio under 10ms while still rendering the full sentence at the current rate. The remaining latency budget gets spent on perception rather than the wire.
+
+2. **Voice library.** GLaDOS is Jemma's primary voice, but the architecture doesn't preclude others. A `voice` parameter on the request would let me fine-tune additional models — a calmer voice for late-night chats, an assistant voice for read-aloud, whatever else fits the moment.
+
+3. **Whisper integration on the input side.** The voice client already does some speech-to-text using `whisper.cpp`; pulling it into the same architecture as the TTS service would close the loop. Talk to Jemma. She talks back. Eye contact optional.
+
+4. **Audio caching.** Many of Jemma's responses start with the same handful of phrases ("Sure.", "Let me check.", "I don't actually know that off the top of my head."). Caching the audio for high-frequency stock phrases would push first-sentence latency from ~23ms to ~1ms for the responses where felt latency matters most.
+
+---
+
+## What I'm proud of
+
+Three design calls worth highlighting.
+
+**Picking a character voice instead of a neutral one.** Most personal-AI projects use whichever TTS sounds the most "professional." That makes them all sound the same. Picking GLaDOS — a *character* — gave Jemma instant personality and made the project memorable to anyone who hears her. Recognition is a feature.
+
+**Splitting the architecture by language.** C++ for inference, Python for audio. Wrong move would have been picking one for both — fighting C++'s ecosystem to do GPU audio, or fighting Python's GIL to do high-concurrency streaming. Using the right language for each layer makes both layers simpler.
+
+**23ms per sentence on a 2080 Ti.** Picked a TTS architecture designed for real-time inference and kept the model warm in GPU memory across requests. The result is audio that arrives before the brain notices it should. Real-time territory on consumer hardware that's two generations old.
+
+She sounds like she's thinking.
+
+That's the whole goal.

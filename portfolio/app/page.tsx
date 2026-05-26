@@ -1,14 +1,14 @@
 // app/page.tsx
 
 import Link from "next/link";
-import { projects } from "@/app/data/projects";
+import { getAllProjects } from "@/app/lib/content";
 import SkillsTicker from "@/app/components/SkillsTicker";
 import { ProjectCard } from "@/app/components/ProjectCard";
 import { SectionHeader } from "@/app/components/SectionHeader";
 import { StatusPill } from "@/app/components/StatusPill";
 import { theme } from "@/app/lib/theme";
 
-const featuredSlugs = ["jemma-ai", "home-automation"];
+const featuredSlugs = ["jemma-ai", "jemma-voice-pipeline"];
 
 const highlightedSkills = [
   "TypeScript",
@@ -28,8 +28,9 @@ const highlightedSkills = [
   "Resilient Systems",
 ];
 
-export default function Home() {
-  const featured = projects.filter(p => featuredSlugs.includes(p.slug));
+export default async function Home() {
+  const allProjects = await getAllProjects();
+  const featured = allProjects.filter(p => featuredSlugs.includes(p.slug));
 
   return (
     <div className="space-y-16">

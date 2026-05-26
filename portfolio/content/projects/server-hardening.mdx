@@ -1,0 +1,242 @@
+---
+title: "Server Hardening"
+tagline: "Layered Linux security and operational hardening for self-hosted infrastructure."
+description: "An evolving infrastructure security project focused on reducing exposure, improving visibility, and making self-hosted systems safe to operate over time."
+tags:
+  - Linux
+  - Security
+  - Docker
+  - SSH
+  - Tailscale
+  - Networking
+  - Infrastructure
+  - Hardening
+date: 2026-05-25
+published: true
+jemmaContext: |
+  Operational security and infrastructure hardening across Linux servers,
+  Dockerized services, reverse proxy environments, and AI infrastructure.
+  Focused on reducing exposure, restricting remote access, and making the
+  homelab behave like real infrastructure that can survive contact with the
+  open internet.
+---
+
+## What it is
+
+Server Hardening is the ongoing security and operational discipline behind every other project on this site.
+
+Most self-hosted systems are safe right up until somebody starts exposing random ports to the internet and forgetting what they opened six months later.
+
+This project exists to prevent that.
+
+The focus is reducing unnecessary exposure, improving operational visibility, tightening remote access workflows, and making infrastructure safer to maintain as the environment grows more complex.
+
+Security is treated less like a checklist and more like infrastructure hygiene.
+
+The goal is not "military-grade cybersecurity."
+
+The goal is predictable systems with fewer bad surprises.
+
+---
+
+## What it does
+
+The platform hardens Linux servers, reverse proxy environments, Docker infrastructure, and remote administration workflows across the self-hosted ecosystem.
+
+Concrete practices in place today:
+
+- **SSH is key-only.** Password auth is disabled, key auth requires a passphrase, and the only path in is over Tailscale.
+- **Public services live behind reverse proxies.** Almost nothing binds directly to a public port. Cloudflare handles edge protection; NGINX handles internal routing; services sit behind both.
+- **Docker isolates services from each other.** Containers have explicit network boundaries, restart policies, and logging — not just "spin it up and forget."
+- **Failed-login monitoring and audit logging are wired through Discord.** Anything unusual fires a notification before it becomes a problem nobody notices.
+- **Credentials rotate after exposure.** Whether the exposure was real (a leak) or hypothetical (a pasted token), the policy is: rotate first, ask questions later.
+- **Backups are tested.** A backup that's never been restored is a story, not a backup.
+
+Most services are intentionally hidden behind multiple layers instead of being exposed directly to the internet.
+
+Convenience is useful until it becomes attack surface.
+
+---
+
+## Why it exists
+
+Self-hosted infrastructure gets dangerous fast.
+
+The moment services become public-facing, the environment stops being "just a homelab" and starts behaving like real infrastructure with real operational risk.
+
+As projects like Jemma AI, Home Assistant, dashboards, APIs, and reverse proxy systems grew more interconnected, the infrastructure needed real operational discipline around access control, exposure, visibility, and recovery.
+
+The project evolved into a practical environment for learning how production systems are actually secured and maintained over time.
+
+Not through theoretical best practices.
+
+Through operating systems long enough to see what breaks.
+
+A large part of the philosophy is simple:
+
+If I don't know why a service is exposed, it probably shouldn't be exposed.
+
+---
+
+## How it works
+
+Hardening starts at the Linux layer.
+
+Unnecessary services are removed or disabled, SSH access is restricted to key auth, firewall rules are tightened, and administrative access is routed through Tailscale instead of leaving systems broadly exposed to the open internet.
+
+Public-facing applications are placed behind reverse proxy layers using NGINX and Cloudflare so internal services do not bind directly to public ports whenever possible.
+
+Dockerized services are treated as isolated infrastructure units with separate:
+
+- Network boundaries
+- Restart behavior
+- Logging policies
+- Exposure rules
+- Authentication paths
+
+The stack also incorporates:
+
+- Reverse proxy logging
+- Infrastructure telemetry
+- Health monitoring
+- Backup validation
+- Security event notifications routed to Discord
+- Secure remote administration over Tailscale only
+
+Monitoring carries more weight than it usually gets credit for.
+
+It's easier to respond to problems early when the infrastructure actually tells you what it's doing.
+
+The environment is intentionally conservative where possible.
+
+Boring systems are usually easier to secure.
+
+---
+
+## The day I found a cryptominer in `/var/tmp/.font`
+
+In December, a cryptominer landed on one of my home servers.
+
+I didn't notice for five months.
+
+The only reason I found it at all was during a routine deploy. I ran `git status` before pushing changes and saw a modification to `package.json` I hadn't made.
+
+That led to `/var/tmp/.font/n0de` — an 11MB stripped ELF binary hidden behind a leading dot so it wouldn't show in default `ls` output. Someone had brute-forced SSH password auth I'd left enabled and modified the application's npm scripts so every `npm run dev` or `npm run start` would silently launch four background instances of the binary in parallel.
+
+They'd also dropped an `.npmrc` with `loglevel=silent` — to suppress any npm output that might have given the attack away during install or run.
+
+It never actually fired.
+
+PM2 invokes Next.js via `npm exec next start`, not `npm run start`. `npm exec` bypasses package.json scripts entirely. So the persistence mechanism sat on the filesystem for five months, waiting for a trigger that never came.
+
+An accidental fourth layer of defense, made entirely of habit. I'll take it.
+
+### The audit
+
+Before cleaning anything up, I checked for additional persistence — because if I'd just deleted the binary and the attacker had backdoors elsewhere, I'd be playing whack-a-mole.
+
+The checklist:
+
+- `~/.ssh/authorized_keys` — empty. They hadn't planted a public key.
+- `crontab -l` — only my legitimate DuckDNS update.
+- `~/.bashrc`, `~/.profile`, `~/.bash_profile` — clean, no auto-run additions.
+- `systemctl --user list-units` — no unauthorized user services.
+- `~/.config/autostart/` — empty.
+- `find /tmp /var/tmp /dev/shm -type f -executable -mtime -180` — only the one binary, nothing else lurking.
+- Top processes by CPU — idle, confirming nothing was actively running.
+
+Hit-and-run, not a campaign. They got in, dropped a binary, set up persistence that happened to never fire, and left.
+
+### The cleanup
+
+Restoring the system was straightforward once I knew the scope:
+
+```bash
+# Confirm nothing's running (no-op given the audit, but cheap insurance)
+pkill -f n0de 2>/dev/null
+
+# Restore the clean package.json from git
+git checkout portfolio/package.json
+
+# Remove the malicious npmrc
+rm portfolio/.npmrc
+
+# Delete the binary and its hiding directory
+rm -rf /var/tmp/.font/
+```
+
+GitHub was clean — the malicious modification had only ever existed on the server, never committed.
+
+### Then the SSH lockdown
+
+The original entry point was SSH password authentication. As long as that was on, the same thing could happen again next month.
+
+The fix is standard but worth doing carefully:
+
+1. Generate an `ed25519` key on the laptop (`ssh-keygen -t ed25519`).
+2. Copy the public key into `~/.ssh/authorized_keys` on the server.
+3. Test key auth from a *fresh* session **without closing the existing one** — the open session is the escape hatch if something goes wrong.
+4. Once key auth works, edit `sshd_config` to disable password auth.
+5. Restart `sshd`.
+6. From another fresh session, verify password auth is actually rejected:
+```bash
+   ssh -o PreferredAuthentications=password user@host
+   # Expected: Permission denied (publickey).
+```
+
+### The gotcha that bit me
+
+Disabling password auth in `/etc/ssh/sshd_config` *didn't take effect*.
+
+`sudo sshd -T | grep passwordauthentication` still showed `passwordauthentication yes`.
+
+The culprit was an Ubuntu cloud-init override: /etc/ssh/sshd_config.d/50-cloud-init.conf
+
+It contains a single line — `PasswordAuthentication yes` — and gets loaded *before* the main `sshd_config` because of an `Include` directive at the top of that file.
+
+`sshd` uses **first-value-wins** for most directives. The cloud-init override set `yes` first; the main config setting `no` was effectively ignored.
+
+The fix is to edit the override file, not the main one:
+
+```bash
+sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' \
+  /etc/ssh/sshd_config.d/50-cloud-init.conf
+sudo systemctl restart ssh
+```
+
+And then verify the *effective* setting, not what's in the file you typed into:
+
+```bash
+sudo sshd -T | grep -E "passwordauthentication|pubkeyauthentication"
+# passwordauthentication no
+# pubkeyauthentication yes
+```
+
+Most hardening guides don't mention this override. It's the kind of detail that only surfaces when you actually verify the result instead of trusting the change.
+
+### What stuck
+
+Five lessons that survived the incident:
+
+- **Boring habits catch real things.** Running `git status` before a deploy is how I noticed. Without that habit the cryptominer would still be there.
+- **Effective config is not the same as what you typed.** Verify with `sshd -T`, not by reading the file.
+- **Defense in depth is real.** PM2's invocation pattern saved me by accident. I'd rather not depend on accidents next time.
+- **Tailscale buys you a lot.** But not "I can leave passwords on." Tailscale protects the network layer; it doesn't replace endpoint hardening.
+- **Owning the cleanup is the engineering part.** Anyone can get hit. The skill is what you do in the next hour.
+
+---
+
+## Where it's going
+
+The roadmap is focused on turning the current hardening environment into a reusable operational baseline for the broader infrastructure ecosystem.
+
+Real next steps in priority order:
+
+1. **`fail2ban` everywhere.** Even with key-only SSH, IPs that hammer port 22 should get banned automatically. Cheap layer.
+2. **Cloudflare Tunnel.** Closes port 22 to the public internet entirely; SSH happens through the tunnel instead. Most attack-resistant short of physical air-gap.
+3. **Centralized audit log shipping.** Currently auth events live on each machine. Shipping them to a single place makes incident review hours, not days.
+4. **Backup restore drills.** A backup that's never been tested isn't a backup. Schedule a quarterly restore-to-fresh-VM.
+
+Reliable systems are usually the ones nobody notices.
+
+That's the goal.
